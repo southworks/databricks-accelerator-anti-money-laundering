@@ -19,7 +19,7 @@
           "age": "35",
           "name": "John Doe"
         },
-        "notebook_path": "/Users/<username>/anti-money-laundering.git/RUNME"
+        "notebook_path": "/Users/<username>/anti-money-laundering/RUNME"
       },
       "new_cluster": {
         "numWorkers": 1,
