@@ -54,7 +54,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
         value: 'true'
       }
     ]
-    timeout: 'PT5M'
+    timeout: 'PT20M'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT1H'
   }
