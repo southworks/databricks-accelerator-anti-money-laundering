@@ -29,8 +29,7 @@
         },
         "spark_version": "7.3.x-scala2.12"
       },
-      "timeout_seconds": 600,
-      "retry_on_timeout": false
+      "timeout_seconds": 600
     }
   ],
   "queue": {
