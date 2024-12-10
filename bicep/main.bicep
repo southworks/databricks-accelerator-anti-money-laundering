@@ -38,7 +38,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       databricks repos create https://github.com/southworks/anti-money-laundering gitHub
       databricks workspace export /Users/${ARM_CLIENT_ID}/anti-money-laundering/bicep/job-template.json > job-template.json
       sed "s/<username>/${ARM_CLIENT_ID}/g" job-template.json > job.json
-      databricks jobs submit --json /Users/${ARM_CLIENT_ID}/anti-money-laundering/bicep/job.json
+      databricks jobs submit --json @./job.json
     '''
     environmentVariables: [
       {

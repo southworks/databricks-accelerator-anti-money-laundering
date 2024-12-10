@@ -22,8 +22,8 @@
         "notebook_path": "/Users/<username>/anti-money-laundering/RUNME"
       },
       "new_cluster": {
-        "numWorkers": 1,
-        "node_type_id": null,
+        "num_workers": 1,
+        "node_type_id": "Standard_DS3_v2",
         "spark_conf": {
           "spark.speculation": true
         },
