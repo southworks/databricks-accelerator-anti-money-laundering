@@ -15,19 +15,19 @@
       "task_key": "Match",
       "description": "Matches orders with user sessions",
       "notebook_task": {
-        "base_parameters": {
-          "age": "35",
-          "name": "John Doe"
-        },
         "notebook_path": "/Users/<username>/anti-money-laundering/RUNME"
       },
       "new_cluster": {
         "num_workers": 1,
         "node_type_id": "Standard_DS3_v2",
+        "runtime_engine": "PHOTON",
         "spark_conf": {
           "spark.speculation": true
         },
-        "spark_version": "7.3.x-scala2.12"
+        "spark_env_vars": {
+          "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+        },
+        "spark_version": "15.4.x-scala2.12"
       },
       "timeout_seconds": 600
     }
