@@ -76,12 +76,12 @@ job_json = {
             {
                 "job_cluster_key": "aml_cluster",
                 "new_cluster": {
-                    "spark_version": "11.3.x-cpu-ml-scala2.12",
+                    "spark_version": "15.4.x-cpu-ml-scala2.12",
                     "spark_conf": {
                         "spark.databricks.delta.formatCheck.enabled": "false"
                         },
                     "num_workers": 2,
-                    "node_type_id": {"AWS": "i3.xlarge", "MSA": "Standard_DS3_v2", "GCP": "n1-highmem-4"}, # different from standard API
+                    "node_type_id": {"AWS": "i3.xlarge", "MSA": "Standard_D4ads_v5", "GCP": "n1-highmem-4"},
                     "custom_tags": {
                         "usage": "solacc_automation",
                         "group": "FSI"
