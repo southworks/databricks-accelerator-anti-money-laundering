@@ -6,6 +6,14 @@
 import warnings
 warnings.filterwarnings("ignore")
 
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.getOrCreate()
+sql = spark.sql
+
+from pyspark.dbutils import DBUtils
+dbutils = DBUtils(spark)
+
 # COMMAND ----------
 
 def tear_down():
@@ -22,7 +30,7 @@ def tear_down():
 import re
 from pathlib import Path
 
-# We ensure that all objects created in that notebooks will be registered in a user specific database. 
+# We ensure that all objects created in that notebooks will be registered in a user specific database.
 useremail = dbutils.notebook.entry_point.getDbutils().notebook().getContext().userName().get()
 username = useremail.split('@')[0]
 
@@ -42,7 +50,7 @@ tear_down()
 
 # COMMAND ----------
 
-_ = sql(f"CREATE DATABASE IF NOT EXISTS {database_name} LOCATION '{home_directory}'")
+_ = sql(f"CREATE DATABASE IF NOT EXISTS {database_name}")
 Path(temp_directory).mkdir(parents=True, exist_ok=True)
 
 # COMMAND ----------
@@ -67,7 +75,7 @@ config = {
 tables = set(sql("SHOW TABLES IN {}".format(database_name)).toPandas().set_index("tableName").index)
 
 if len(tables) == 0:
-  
+
   print("Creating input tables {} and {}".format(config['db_transactions'], config['db_entities']))
   # populate table with sample records
   spark \
@@ -76,7 +84,7 @@ if len(tables) == 0:
     .load("s3://db-gtm-industry-solutions/data/fsi/aml_introduction/txns.parquet") \
     .write \
     .saveAsTable(config['db_transactions'])
-  
+
   spark \
     .read \
     .format("parquet") \
@@ -97,4 +105,4 @@ if len(tables) == 0:
 
 import mlflow
 experiment_name = f"/Users/{useremail}/aml_experiment"
-mlflow.set_experiment(experiment_name) 
+mlflow.set_experiment(experiment_name)
