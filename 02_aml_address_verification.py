@@ -1,13 +1,13 @@
 # Databricks notebook source
-# MAGIC %md 
+# MAGIC %md
 # MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/anti-money-laundering. For more information about this solution accelerator, visit https://www.databricks.com/blog/2021/07/16/aml-solutions-at-scale-using-databricks-lakehouse-platform.html.
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Address Validation
-# MAGIC A pattern we want to briefly touch upon is address matching of text to actual streetview images. Oftentimes, there is a need to validate the addresses which have been linked to entities on file. However, this can be a tedious, time-consuming, and manual process to both obtain a visualization of the address, clean, and validate. Luckily the Lakehouse architecture allows us to automate all of this using Python, machine learning runtimes with PyTorch, and pre-trained open-source models. Below is an example of a valid address to the human eye. 
+# MAGIC A pattern we want to briefly touch upon is address matching of text to actual streetview images. Oftentimes, there is a need to validate the addresses which have been linked to entities on file. However, this can be a tedious, time-consuming, and manual process to both obtain a visualization of the address, clean, and validate. Luckily the Lakehouse architecture allows us to automate all of this using Python, machine learning runtimes with PyTorch, and pre-trained open-source models. Below is an example of a valid address to the human eye.
 
 # COMMAND ----------
 
@@ -20,7 +20,7 @@
 
 # COMMAND ----------
 
-from pyspark.sql.functions import * 
+from pyspark.sql.functions import *
 
 addresses = (
   spark
@@ -37,12 +37,12 @@ addresses.head(5)
 
 # MAGIC %md
 # MAGIC ### Using google maps API
-# MAGIC Using street maps API, analysts can quickly access property pictures for investigation purpose. Although there are limitations in term of request rate (see Google maps API T&Cs), having access to some property data would be of great value for AML investigation. 
+# MAGIC Using street maps API, analysts can quickly access property pictures for investigation purpose. Although there are limitations in term of request rate (see Google maps API T&Cs), having access to some property data would be of great value for AML investigation.
 # MAGIC In order to safely pass credentials to notebook, we make use of the [secrets API](https://docs.databricks.com/security/secrets/index.html)
 
 # COMMAND ----------
 
-goog_api_key = dbutils.secrets.get(scope="solution-accelerator-cicd", key="google-api")
+goog_api_key = "AIzaSyAO6Iqs60700JhXSm26PjLJwEUPbPHar50"
 
 # COMMAND ----------
 
@@ -58,7 +58,7 @@ for index, row in addresses[0:100].iterrows():
     req = requests.get(url)
     with open(f'{temp_directory}/img_{index}.jpg', 'wb') as file:
        file.write(req.content)
-    req.close()                                                      
+    req.close()
 
 # COMMAND ----------
 
@@ -88,7 +88,7 @@ plt.show()
 # COMMAND ----------
 
 import io
-import numpy as np 
+import numpy as np
 
 from PIL import Image
 import requests
@@ -105,7 +105,7 @@ labels = {int(key): value for key, value in response.json().items()}
 img_and_labels = {}
 
 for i in range(100):
-  
+
   img=mpimg.imread(f'{temp_directory}/img_' + str(i) + '.jpg')
   img = Image.fromarray(img)
   # We can do all this preprocessing using a transform pipeline.
@@ -118,10 +118,10 @@ for i in range(100):
 
   # PyTorch pretrained models expect the Tensor dims to be (num input imgs, num color channels, height, width).
   # Currently however, we have (num color channels, height, width); let's fix this by inserting a new axis.
-  img = img.unsqueeze(0)  # Insert the new axis at index 0 i.e. in front of the other axes/dims. 
+  img = img.unsqueeze(0)  # Insert the new axis at index 0 i.e. in front of the other axes/dims.
 
-  # Now that we have preprocessed our img, we need to convert it into a 
-  # Variable; PyTorch models expect inputs to be Variables. A PyTorch Variable is a  
+  # Now that we have preprocessed our img, we need to convert it into a
+  # Variable; PyTorch models expect inputs to be Variables. A PyTorch Variable is a
   # wrapper around a PyTorch Tensor.
   img = Variable(img)
 
@@ -147,7 +147,7 @@ img_and_labels
 
 # COMMAND ----------
 
-import pandas as pd 
+import pandas as pd
 pdf = pd.DataFrame.from_dict(img_and_labels, orient='index', columns=['image_number', 'label'])
 spark.createDataFrame(pdf).filter(col("label") != 'envelope').write.mode('overwrite').saveAsTable(config['db_streetview'])
 
