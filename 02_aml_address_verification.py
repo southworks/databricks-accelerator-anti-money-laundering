@@ -42,7 +42,7 @@ addresses.head(5)
 
 # COMMAND ----------
 
-goog_api_key = "AIzaSyAO6Iqs60700JhXSm26PjLJwEUPbPHar50"
+goog_api_key = dbutils.secrets.get(scope="solution-accelerator-cicd", key="google-api")
 
 # COMMAND ----------
 
