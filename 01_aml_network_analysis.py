@@ -2,6 +2,14 @@
 # MAGIC %md
 # MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/anti-money-laundering. For more information about this solution accelerator, visit https://www.databricks.com/blog/2021/07/16/aml-solutions-at-scale-using-databricks-lakehouse-platform.html.
 # MAGIC %pip install graphframes
+# COMMAND ----------
+
+from graphframes import GraphFrame
+from pyspark.sql.functions import col, sum, coalesce
+import uuid
+from graphframes.lib import Pregel
+
+# COMMAND ----------
 
 # COMMAND ----------
 
@@ -74,11 +82,6 @@ display(
 # MAGIC #### Using GraphFrames
 # MAGIC As we want to explore deeper relationships, our SQL statement will exponentially grow in size and complexity, requiring a graph library such as Graphframes. [GraphFrames](https://graphframes.github.io/graphframes/docs/_site/user-guide.html#basic-graph-and-dataframe-queries) is a package for Apache Spark which provides DataFrame-based Graphs. It provides high-level APIs in Scala, Java, and Python. It aims to provide both the functionality of GraphX and extended functionality taking advantage of Spark DataFrames. This extended functionality includes motif finding, DataFrame-based serialization, and highly expressive graph queries.
 
-# COMMAND ----------
-
-from graphframes import *
-
-# COMMAND ----------
 
 # DBTITLE 1,Building our graph
 # MAGIC %md
@@ -118,8 +121,6 @@ aml_identity_g = GraphFrame(identity_nodes, identity_edges)
 # COMMAND ----------
 
 # DBTITLE 1,Using graph properties to add the vertex degree as a property of the vertices then remove non-person nodes with degree 1
-from pyspark.sql.functions import *
-import uuid
 sc.setCheckpointDir('{}/chk_{}'.format(temp_directory, uuid.uuid4().hex))
 result = aml_identity_g.degrees
 result = aml_identity_g.vertices.join(result,'id')
@@ -142,7 +143,6 @@ aml_identity_g2 = GraphFrame(identity_nodes2, identity_edges)
 
 # COMMAND ----------
 
-import uuid
 sc.setCheckpointDir('{}/chk_{}'.format(temp_directory, uuid.uuid4().hex))
 result = aml_identity_g2.connectedComponents()
 result.select("id", "component", 'type').createOrReplaceTempView("components")
@@ -448,9 +448,7 @@ aml_entity_g = GraphFrame(entity_nodes, entity_edges)
 
 # COMMAND ----------
 
-from graphframes import GraphFrame
-from pyspark.sql.functions import coalesce, col, lit, sum, when, greatest
-from graphframes.lib import Pregel
+
 
 ranks = aml_entity_g.pregel \
      .setMaxIter(3) \
