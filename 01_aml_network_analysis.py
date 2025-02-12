@@ -1,15 +1,16 @@
 # Databricks notebook source
-# MAGIC %md 
+# MAGIC %md
 # MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/anti-money-laundering. For more information about this solution accelerator, visit https://www.databricks.com/blog/2021/07/16/aml-solutions-at-scale-using-databricks-lakehouse-platform.html.
+# MAGIC %pip install graphframes
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
-# MAGIC # Graph patterns 
-# MAGIC 
-# MAGIC One of the main data sources which AML analysts will use as part of a case is transaction data. Even though this data is tabular and easily accessible with SQL, it becomes cumbersome to track chains of transactions that are 3 or more layers deep with SQL queries. For this reason, it is important to have a flexible suite of languages and APIs to express simple concepts such as a connected network of suspicious individuals transacting illegally together. Luckily, this is simple to accomplish using [GraphFrames](https://graphframes.github.io/graphframes/docs/_site/index.html), a graph API pre-installed in the Databricks Runtime for Machine Learning. 
-# MAGIC 
+# MAGIC
+# MAGIC # Graph patterns
+# MAGIC
+# MAGIC One of the main data sources which AML analysts will use as part of a case is transaction data. Even though this data is tabular and easily accessible with SQL, it becomes cumbersome to track chains of transactions that are 3 or more layers deep with SQL queries. For this reason, it is important to have a flexible suite of languages and APIs to express simple concepts such as a connected network of suspicious individuals transacting illegally together. Luckily, this is simple to accomplish using [GraphFrames](https://graphframes.github.io/graphframes/docs/_site/index.html), a graph API pre-installed in the Databricks Runtime for Machine Learning.
+# MAGIC
 # MAGIC We are going to utilize a dataset consisting of transactions as well as entities derived from transactions to detect the presence of these patterns with Spark, GraphFrames, and Delta Lake. The persisted patterns are saved in Delta Lake so that Databricks SQL can be applied on the gold-level aggregated versions of these findings. The core value that the patterns lend is that analysts can consolidate investigations of connected individuals. In each of the scenarios, we will be using the connectivity of individuals using graph analytics - connecting identities in this simple manner means cases can be consolidated to reduce duplication of work and decrease time to resolve cases.
 
 # COMMAND ----------
@@ -20,24 +21,24 @@
 
 # MAGIC %md
 # MAGIC ## Entity Resolution/Synthetic Identity
-# MAGIC 
+# MAGIC
 # MAGIC The existence of synthetic identities can be a cause for alarm. Using graph analysis, all of the entities from our transactions can be analyzed in bulk to detect a risk level. Based on how many connections (i.e. common attributes) exist between entities, we can assign a lower or higher score and create an alert based on high-scoring groups. Below is a basic representation of this idea
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://databricks.com/wp-content/uploads/2021/07/AML-on-Lakehouse-Platform-blog-img-2.jpg" width=550/>
-# MAGIC 
-# MAGIC In our analysis, this is done in 3 phases: 
-# MAGIC 
-# MAGIC a) Based on the transaction data, extract the entities 
+# MAGIC
+# MAGIC In our analysis, this is done in 3 phases:
+# MAGIC
+# MAGIC a) Based on the transaction data, extract the entities
 # MAGIC <br>
-# MAGIC b) Create links between entities based on address, phone number, email 
+# MAGIC b) Create links between entities based on address, phone number, email
 # MAGIC <br>
-# MAGIC c) Use GraphFrames connected components to determine whether multiple entities (identified by an ID and other attributes above) are connected via one or more links. 
+# MAGIC c) Use GraphFrames connected components to determine whether multiple entities (identified by an ID and other attributes above) are connected via one or more links.
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC **Using SQL**
-# MAGIC 
+# MAGIC
 # MAGIC Before jumping straight into graph theory, we first want to get a glimpse at our synthetic data set using standard SQL. By joining our dataset by itself, we can easily extract entities sharing a same attribute such as email address. Although feasible for a 1st or 2nd degree connection, deeper insights can only be gained with more advanced network techniques as described later.
 
 # COMMAND ----------
@@ -50,14 +51,14 @@ display(spark.read.table(config['db_transactions']))
 # DBTITLE 1,Entities with matching emails [Display Only]
 display(
   sql("""
-  select * 
+  select *
   from {0}
-  where email_addr in 
+  where email_addr in
   (
-    select A.email_addr 
-    from 
+    select A.email_addr
+    from
       (
-        select email_addr, count(*) as cnt 
+        select email_addr, count(*) as cnt
         from {0}
         group by email_addr
       ) A
@@ -82,7 +83,7 @@ from graphframes import *
 # DBTITLE 1,Building our graph
 # MAGIC %md
 # MAGIC We build our graph structure where nodes will capture distinct transaction attributes (email/phone/address) and edges the relationships between those attributes. A transaction involving customer A and email address E would connect "node" A with "node" E. Our graph becomes undirected / unweighted network.
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://github.com/stephanieamrivera/upgraded-octo-parakeet/blob/main/slides/AML%20Example%20Graph.png?raw=true" width=850>
 
 # COMMAND ----------
@@ -98,11 +99,11 @@ select entity_id as src, phone_number as dst from {0} where phone_number is not 
 
 identity_nodes = sql('''
 select distinct(entity_id) as id, 'Person' as type from {0}
-union 
+union
 select distinct(address) as id, 'Address' as type from {0}
-union 
+union
 select distinct(email_addr) as id, 'Email' as type from {0}
-union 
+union
 select distinct(phone_number) as id, 'Phone' as type from {0}
 '''.format(config['db_entities']))
 
@@ -111,7 +112,7 @@ aml_identity_g = GraphFrame(identity_nodes, identity_edges)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC <img src = "https://github.com/stephanieamrivera/upgraded-octo-parakeet/blob/main/slides/AML%20Example%20Graph%20Degrees.png?raw=true" width=850>
 
 # COMMAND ----------
@@ -135,9 +136,9 @@ aml_identity_g2 = GraphFrame(identity_nodes2, identity_edges)
 
 # COMMAND ----------
 
-# DBTITLE 1,Using graph algorithms to understand the relationships between entities 
+# DBTITLE 1,Using graph algorithms to understand the relationships between entities
 # MAGIC %md
-# MAGIC Graph built-in models such as a [connected components](https://graphframes.github.io/graphframes/docs/_site/user-guide.html#connected-components) drastically simplifies our overall investigation. Instead of recursively joining our dataset for connected entities, this simple API call will return groups of nodes having at least one entity in common. 
+# MAGIC Graph built-in models such as a [connected components](https://graphframes.github.io/graphframes/docs/_site/user-guide.html#connected-components) drastically simplifies our overall investigation. Instead of recursively joining our dataset for connected entities, this simple API call will return groups of nodes having at least one entity in common.
 
 # COMMAND ----------
 
@@ -154,7 +155,7 @@ result.select("id", "component", 'type').createOrReplaceTempView("components")
 
 # COMMAND ----------
 
-# DBTITLE 1,Select the components that have more than one "person" entity 
+# DBTITLE 1,Select the components that have more than one "person" entity
 # MAGIC %md
 # MAGIC As we gain deeper insights of our graph structure, the results can be further analyzed through simple SQL. Used as a silver layer, this data asset can be used to find synthetic IDs at minimal cost.
 
@@ -165,9 +166,9 @@ result.select("id", "component", 'type').createOrReplaceTempView("components")
 # MAGIC as
 # MAGIC with dupes as
 # MAGIC (
-# MAGIC   select 
-# MAGIC     component, 
-# MAGIC     count(case when type = 'Person' then 1 end) person_ct 
+# MAGIC   select
+# MAGIC     component,
+# MAGIC     count(case when type = 'Person' then 1 end) person_ct
 # MAGIC   from components
 # MAGIC   group by component
 # MAGIC   having person_ct > 1
@@ -214,7 +215,7 @@ ids.createOrReplaceTempView("sus_ids")
 # COMMAND ----------
 
 # DBTITLE 1,The synth score is the number of shared attributes plus the number of persons they share with
-# MAGIC %sql 
+# MAGIC %sql
 # MAGIC CREATE OR REPLACE table entity_synth_scores as (
 # MAGIC   select
 # MAGIC     component,
@@ -236,7 +237,7 @@ ids.createOrReplaceTempView("sus_ids")
 
 # DBTITLE 1,Higher score is higher risk
 # MAGIC %sql
-# MAGIC 
+# MAGIC
 # MAGIC SELECT * from entity_synth_scores
 
 # COMMAND ----------
@@ -248,9 +249,9 @@ entity_synth_scores.write.format("delta").mode('overwrite').option("overwriteSch
 
 # MAGIC %md
 # MAGIC ## Structuring/Smurfing
-# MAGIC 
+# MAGIC
 # MAGIC Another common pattern seen often is one called structuring in which multiple entities collude by sending smaller ‘under the radar’ payments to a set of banks, which subsequently route larger aggregate amounts to a final institution on the far right. In this scenario, all parties have stayed underneath the $10,000 amount which would typically flag authorities. Not only is this easily accomplished with graph analytics, but the motif finding technique used can be automated to extend to other permutations of networks to find other alerts in the same way. We represent this technique through the form of a simple graph below
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://databricks.com/wp-content/uploads/2021/07/AML-on-Lakehouse-Platform-blog-img-4.jpg" width="800"/>
 
 # COMMAND ----------
@@ -263,27 +264,27 @@ entity_synth_scores.write.format("delta").mode('overwrite').option("overwriteSch
 # DBTITLE 1,Creating the Graphframe
 entity_edges = spark.sql(
 """
-select 
-  originator_id as src, 
-  beneficiary_id as dst, 
-  txn_amount, txn_id as id 
+select
+  originator_id as src,
+  beneficiary_id as dst,
+  txn_amount, txn_id as id
 from {0}
 """.format(config['db_transactions'])
 )
 
 entity_nodes = spark.sql(
 """
-select 
-  distinct(A.id), 
-  'entity' as type 
+select
+  distinct(A.id),
+  'entity' as type
 from
   (
-    select 
-      distinct(originator_id) as id 
+    select
+      distinct(originator_id) as id
     from {0}
-    union 
-    select 
-      distinct(beneficiary_id) as id 
+    union
+    select
+      distinct(beneficiary_id) as id
     from {0}
   ) A
 """.format(config['db_transactions'])
@@ -297,9 +298,9 @@ entity_nodes.createOrReplaceTempView("entity_nodes")
 
 # MAGIC %md
 # MAGIC ### Motifs
-# MAGIC 
-# MAGIC Let’s write the basic motif-finding code to detect a possible scenario. 
-# MAGIC 
+# MAGIC
+# MAGIC Let’s write the basic motif-finding code to detect a possible scenario.
+# MAGIC
 # MAGIC <img src="https://github.com/SpyderRivera/upgraded-octo-parakeet/blob/main/slides/motif.png?raw=true" width="800"/>
 
 # COMMAND ----------
@@ -336,7 +337,7 @@ levels = sql(
     on graph.a.id = entity0.entity_id
     join {1} entity1
     on graph.b.id = entity1.entity_id
-    join {1} entity2 
+    join {1} entity2
     on graph.c.id = entity2.entity_id
     join {1} entity3
     on graph.g.id = entity3.entity_id
@@ -348,7 +349,7 @@ levels = sql(
     on graph.d.id = entity0.entity_id
     join {1} entity1
     on graph.f.id = entity1.entity_id
-    join {1} entity2 
+    join {1} entity2
     on graph.c.id = entity2.entity_id
     join {1} entity3
     on graph.g.id = entity3.entity_id
@@ -365,9 +366,9 @@ display(levels)
 
 # MAGIC %md
 # MAGIC ## Round-tripping
-# MAGIC 
+# MAGIC
 # MAGIC There can be several variations of this pattern of money flow, but the basic premise is that the source and the destination are the same. Like the previous ‘structuring’ scenario, a simple motif search can help expose such patterns.
-# MAGIC 
+# MAGIC
 # MAGIC <img src="https://brysmiwasb.blob.core.windows.net/demos/aml/RoudTrip.png" width="650"/>
 
 # COMMAND ----------
@@ -381,7 +382,7 @@ display(round_trip)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Once again, addressing this problem as a graph helps us record all parties involved in a roundtrip AML pattern together with the aggregated amount. 
+# MAGIC Once again, addressing this problem as a graph helps us record all parties involved in a roundtrip AML pattern together with the aggregated amount.
 
 # COMMAND ----------
 
@@ -408,30 +409,30 @@ display(
 
 # MAGIC %md
 # MAGIC ## Risk score Propagation
-# MAGIC 
-# MAGIC The 4th pattern we want to cover here is the perfect definition as to why this problem cannot be addressed through a simple SQL statement. Identified high risk entities (such as poltically exposed person) will have an influence (a network effect) on their circle. The risk score of all the entities that they interact with has to be adjusted to reflect the zone of influence. Using an iterative approach, we can follow the flow of transactions to any given depth and adjust the risk scores of others affected in the network. Luckily, [Pregel API](https://spark.apache.org/docs/latest/graphx-programming-guide.html#pregel-api) was built for that exact purpose. 
-# MAGIC 
+# MAGIC
+# MAGIC The 4th pattern we want to cover here is the perfect definition as to why this problem cannot be addressed through a simple SQL statement. Identified high risk entities (such as poltically exposed person) will have an influence (a network effect) on their circle. The risk score of all the entities that they interact with has to be adjusted to reflect the zone of influence. Using an iterative approach, we can follow the flow of transactions to any given depth and adjust the risk scores of others affected in the network. Luckily, [Pregel API](https://spark.apache.org/docs/latest/graphx-programming-guide.html#pregel-api) was built for that exact purpose.
+# MAGIC
 # MAGIC <img src="https://brysmiwasb.blob.core.windows.net/demos/aml/pregel.png" width="900"/>
 
 # COMMAND ----------
 
 entity_edges = spark.sql("""
-select 
-  originator_id as src, 
-  beneficiary_id as dst, 
-  txn_amount, 
-  txn_id as id 
+select
+  originator_id as src,
+  beneficiary_id as dst,
+  txn_amount,
+  txn_id as id
 from {}
 """.format(config['db_transactions']))
 
 entity_nodes = spark.sql("""
-select 
-  distinct(A.id), risk 
+select
+  distinct(A.id), risk
 from
   (
-    select 
-      distinct(entity_id) as id, 
-      risk_score risk 
+    select
+      distinct(entity_id) as id,
+      risk_score risk
     from {}
   ) A
 """.format(config['db_entities']))

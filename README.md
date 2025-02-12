@@ -22,3 +22,12 @@
 To run this accelerator, clone this repo into a Databricks workspace. Attach the RUNME notebook to any cluster running a DBR 11.0 or later runtime, and execute the notebook via Run-All. A multi-step-job describing the accelerator pipeline will be created, and the link will be provided. Execute the multi-step-job to see how the pipeline runs.
 
 The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
+
+
+## Notebooks summary
+
+### 00 Aml context
+This notebook provides an overview of Databricks' AML solution, outlining the use of graph analytics, NLP, and computer vision for fraud detection. It includes references to required libraries, licensing details, and links to the full solution. This serves as a starting point for configuring the AML environment before running analytical workflows.
+
+### 01 Aml network analysis
+This notebook performs network analysis for Anti-Money Laundering (AML) using GraphFrames in Databricks. It builds transaction graphs, detects synthetic identities, identifies suspicious transaction patterns (structuring, round-tripping), and propagates risk scores across the network. Outputs include detected fraud patterns, entity risk scores, and structured datasets for further SQL-based analysis.
