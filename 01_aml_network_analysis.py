@@ -4,6 +4,9 @@
 # MAGIC %pip install graphframes
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC #### Using GraphFrames
+# MAGIC As we want to explore deeper relationships, our SQL statement will exponentially grow in size and complexity, requiring a graph library such as Graphframes. [GraphFrames](https://graphframes.github.io/graphframes/docs/_site/user-guide.html#basic-graph-and-dataframe-queries) is a package for Apache Spark which provides DataFrame-based Graphs. It provides high-level APIs in Scala, Java, and Python. It aims to provide both the functionality of GraphX and extended functionality taking advantage of Spark DataFrames. This extended functionality includes motif finding, DataFrame-based serialization, and highly expressive graph queries.
 from graphframes import GraphFrame
 from pyspark.sql.functions import col, sum, coalesce
 import uuid
@@ -78,9 +81,6 @@ display(
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC #### Using GraphFrames
-# MAGIC As we want to explore deeper relationships, our SQL statement will exponentially grow in size and complexity, requiring a graph library such as Graphframes. [GraphFrames](https://graphframes.github.io/graphframes/docs/_site/user-guide.html#basic-graph-and-dataframe-queries) is a package for Apache Spark which provides DataFrame-based Graphs. It provides high-level APIs in Scala, Java, and Python. It aims to provide both the functionality of GraphX and extended functionality taking advantage of Spark DataFrames. This extended functionality includes motif finding, DataFrame-based serialization, and highly expressive graph queries.
 
 
 # DBTITLE 1,Building our graph
