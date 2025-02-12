@@ -21,7 +21,7 @@
 # COMMAND ----------
 
 from PIL import Image
-from pyspark.sql.functions import *
+from pyspark.sql.functions import col, translate
 from torch.autograd import Variable
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
