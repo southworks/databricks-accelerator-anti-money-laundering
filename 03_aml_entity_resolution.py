@@ -1,14 +1,14 @@
 # Databricks notebook source
-# MAGIC %md 
+# MAGIC %md
 # MAGIC You may find this series of notebooks at https://github.com/databricks-industry-solutions/anti-money-laundering. For more information about this solution accelerator, visit https://www.databricks.com/blog/2021/07/16/aml-solutions-at-scale-using-databricks-lakehouse-platform.html.
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC 
+# MAGIC
 # MAGIC # Data Deduplication
-# MAGIC 
-# MAGIC The last category of problems in AML that we focus on is entity resolution. Many open-source libraries tackle this problem, so for some basic entity fuzzy matching, we chose to highlight a library that achieves the linkage at scale. 
+# MAGIC
+# MAGIC The last category of problems in AML that we focus on is entity resolution. Many open-source libraries tackle this problem, so for some basic entity fuzzy matching, we chose to highlight a library that achieves the linkage at scale.
 
 # COMMAND ----------
 
@@ -20,6 +20,13 @@
 # MAGIC %run ./config/aml_config
 
 # COMMAND ----------
+
+from splink import Splink
+from splink.intuition import intuition_report
+from splink import Splink
+from pyspark.sql.functions import col
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
 
 raw_records = spark.read.table(config['db_dedupe'])
 display(raw_records)
@@ -53,14 +60,14 @@ settings = {
     ]
 }
 
-from splink import Splink
+
 linker = Splink(settings, raw_records, spark)
 raw_records_entities = linker.get_scored_comparisons()
 display(raw_records_entities.take(1))
 
 # COMMAND ----------
 
-# MAGIC %md 
+# MAGIC %md
 # MAGIC As reported above, we quickly found some inconsistencies for NY Mellon address, with "Canada Square, Canary Wharf, London, United Kingdom" similar to "Canada Square, Canary Wharf, London, UK". We can store our de-duplicated records back to a delta table that can be used for AML investigation.
 
 # COMMAND ----------
@@ -76,7 +83,7 @@ model.all_charts_write_html_file(f"{temp_directory}/splink_charts.html", overwri
 
 # COMMAND ----------
 
-# MAGIC %md Let's dig deeper into some of statistics and plots offered by the Splink library. The following commands offer insights into how the match probability was calculated. Splink primarily uses a Expectation Maximization framework to maximize a likelihood function to generate match probabilities on record pairs as shown in the below graphs. Expectation Maximization is an iterative algorithm, so we can also see matches and non matches for different iterations as well. 
+# MAGIC %md Let's dig deeper into some of statistics and plots offered by the Splink library. The following commands offer insights into how the match probability was calculated. Splink primarily uses a Expectation Maximization framework to maximize a likelihood function to generate match probabilities on record pairs as shown in the below graphs. Expectation Maximization is an iterative algorithm, so we can also see matches and non matches for different iterations as well.
 
 # COMMAND ----------
 
@@ -90,14 +97,13 @@ displayHTML(html_file_content)
 
 # COMMAND ----------
 
-from splink.intuition import intuition_report
 row_dict = raw_records_entities.toPandas().sample(1).to_dict(orient="records")[0]
 print(intuition_report(row_dict, model))
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Finally, we can enrich our original dataset with a unique identifier that can be used to de-duplicate matching records. Once again, we do not wish to modify underlying data with AI, but rather provide our AML investigation team all the necessary context / utilities for them to take the necessary measures. 
+# MAGIC Finally, we can enrich our original dataset with a unique identifier that can be used to de-duplicate matching records. Once again, we do not wish to modify underlying data with AI, but rather provide our AML investigation team all the necessary context / utilities for them to take the necessary measures.
 
 # COMMAND ----------
 
@@ -118,23 +124,22 @@ settings = {
         "l.txn_amount = r.txn_amount",
     ],
     "comparison_columns": [
-        
+
         {
             "col_name": "rptd_originator_address",
-        }, 
-        { 
+        },
+        {
             "col_name": "rptd_originator_name",
         }
     ]
 }
 
-from splink import Splink
 linker = Splink(settings, df2, spark)
 df2_e = linker.get_scored_comparisons()
 
 # COMMAND ----------
 
-from pyspark.sql.functions import * 
+
 display(df2_e.filter( (col("rptd_originator_address_l") != '')).filter((col("rptd_originator_address_r") != '')))
 
 # COMMAND ----------
@@ -142,5 +147,5 @@ display(df2_e.filter( (col("rptd_originator_address_l") != '')).filter((col("rpt
 # MAGIC %md
 # MAGIC ## Closing thoughts
 # MAGIC In this series of notebooks, we briefly touched on different technical concepts as they pertain to AML investigations. From network analysis, computer vision and entity resolution, we demonstrated the need for AI to complement decisioning and reduce investigation time. Although we kept the investigation aspect light, we covered why the Lakehouse architecture is the most scalable and versatile platform to enable analysts in their AML analytics. All of these capabilities will allow your organization to reduce TCO compared to proprietary AML solutions. Organizations can start embedding advanced analytics in their day to day process by bringing additional context to their investigations team rather than trying to automate what is often regarded as the most regulated activity. AI as **augmented intelligence**, we can easily package all necessary AI driven insights through the form of simple dashboarding capabilities for analysts to act upon.
-# MAGIC 
+# MAGIC
 # MAGIC <img src=https://brysmiwasb.blob.core.windows.net/demos/aml/aml_dashboard.png width=800>
