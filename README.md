@@ -23,6 +23,7 @@ To run this accelerator, clone this repo into a Databricks workspace. Attach the
 
 The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
 
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2Fmain%2Fbicep%2Fmain.json)
 
 ## Notebooks summary
 
@@ -31,3 +32,11 @@ This notebook provides an overview of Databricks' AML solution, outlining the us
 
 ### 01 Aml network analysis
 This notebook performs network analysis for Anti-Money Laundering (AML) using GraphFrames in Databricks. It builds transaction graphs, detects synthetic identities, identifies suspicious transaction patterns (structuring, round-tripping), and propagates risk scores across the network. Outputs include detected fraud patterns, entity risk scores, and structured datasets for further SQL-based analysis.
+
+### 02 Aml Address Validation
+
+This notebook automates address validation for AML investigations by matching textual addresses with street view images using Google Maps API and a pre-trained VGG16 model. It classifies images to verify property legitimacy, storing results in Delta Lake for easy querying and analysis. This approach accelerates manual validation processes, enabling faster and more efficient AML workflows.
+
+### 03 Aml entity resolution
+
+This notebook focuses on entity resolution and data deduplication for AML investigations using the Splink library. It identifies duplicate records by matching entity attributes like organization names, addresses, and transaction amounts, assigning match probabilities to flag potential inconsistencies. The results are stored in Delta Lake, enabling efficient querying and analysis for AML workflows.
