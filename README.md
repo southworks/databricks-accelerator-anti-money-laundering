@@ -23,7 +23,7 @@ To run this accelerator, clone this repo into a Databricks workspace. Attach the
 
 The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2Fmain%2Fbicep%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2F98859-Create-bicep-files-for-Anti-money-laundering%2Fbicep%2Fmain.json)
 
 ## Notebooks summary
 
