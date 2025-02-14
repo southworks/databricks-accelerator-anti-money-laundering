@@ -27,7 +27,6 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import pandas as pd
 import requests
-import requests
 import torchvision.models as models
 import torchvision.transforms as transforms
 

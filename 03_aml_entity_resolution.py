@@ -26,6 +26,7 @@ from splink.intuition import intuition_report
 from splink import Splink
 from pyspark.sql.functions import col
 from pyspark.sql import SparkSession
+
 spark = SparkSession.builder.getOrCreate()
 
 raw_records = spark.read.table(config['db_dedupe'])
