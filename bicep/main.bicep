@@ -87,7 +87,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       databricks secrets create-scope solution-accelerator-cicd
 
       # Add the secret to the scope
-      databricks secrets put solution-accelerator-cicd google-api --string-value "${SECRET}"
+      databricks secrets put-secret solution-accelerator-cicd google-api --string-value "${SECRET}"
 
       # Clone the GitHub repository
       databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub
