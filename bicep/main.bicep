@@ -90,7 +90,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       databricks secrets put-secret solution-accelerator-cicd google-api --string-value "${SECRET}"
 
       # Clone the GitHub repository
-      databricks repos create --url https://github.com/southworks/${ACCELERATOR_REPO_NAME} --provider gitHub --branch 98859-Create-bicep-files-for-Anti-money-laundering
+      databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub
 
       # Export the job template and modify it
       databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json
