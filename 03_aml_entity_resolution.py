@@ -125,7 +125,6 @@ settings = {
         "l.txn_amount = r.txn_amount",
     ],
     "comparison_columns": [
-
         {
             "col_name": "rptd_originator_address",
         },
