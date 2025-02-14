@@ -84,10 +84,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
       # Create a secret scope
-      databricks secrets create-scope --scope solution-accelerator-cicd --initial-manage-principal users
+      databricks secrets create-scope solution-accelerator-cicd
 
       # Add the secret to the scope
-      databricks secrets put --scope solution-accelerator-cicd --key google-api --string-value "${SECRET}"
+      databricks secrets put solution-accelerator-cicd google-api --string-value "${SECRET}"
 
       # Clone the GitHub repository
       databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub
