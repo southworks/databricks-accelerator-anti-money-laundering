@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "8011056362400698389"
+      "templateHash": "15798283454801056945"
     }
   },
   "parameters": {
@@ -32,14 +32,7 @@
     },
     "sku": {
       "type": "string",
-      "defaultValue": "standard",
-      "allowedValues": [
-        "standard",
-        "premium"
-      ],
-      "metadata": {
-        "description": "The pricing tier of workspace."
-      }
+      "defaultValue": "premium"
     },
     "secret": {
       "type": "securestring",

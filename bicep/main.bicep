@@ -10,12 +10,7 @@ param databricksResourceName string
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
 param disablePublicIp bool = false
 
-@description('The pricing tier of workspace.')
-@allowed([
-  'standard'
-  'premium'
-])
-param sku string = 'standard'
+param sku string = 'premium'
 
 @description('Google street API key to be used in the notebooks.')
 @secure()
