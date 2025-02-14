@@ -80,7 +80,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
     scriptContent: '''
       cd ~
       # Install dependencies
-      tdnf install -yq unzip
       curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
       # Create a secret scope

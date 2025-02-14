@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "11637763495823908915"
+      "templateHash": "8011056362400698389"
     }
   },
   "parameters": {
@@ -103,7 +103,7 @@
       "kind": "AzureCLI",
       "properties": {
         "azCliVersion": "2.9.1",
-        "scriptContent": "      cd ~\r\n      # Install dependencies\r\n      tdnf install -yq unzip\r\n      curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh\r\n\r\n      # Create a secret scope\r\n      databricks secrets create-scope solution-accelerator-cicd\r\n\r\n      # Add the secret to the scope\r\n      databricks secrets put-secret solution-accelerator-cicd google-api --string-value \"${SECRET}\"\r\n\r\n      # Clone the GitHub repository\r\n      databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub\r\n\r\n      # Export the job template and modify it\r\n      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json\r\n      notebook_path=\"/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME\"\r\n      jq \".tasks[0].notebook_task.notebook_path = \\\"${notebook_path}\\\"\" job-template.json > job.json\r\n\r\n      # Submit the Databricks job\r\n      databricks jobs submit --json @./job.json\r\n      #job_id=$(databricks jobs submit --json @./job.json | jq -r '.job_id')\r\n      #echo \"{\\\"job_id\\\": \\\"$job_id\\\"}\" > $AZ_SCRIPTS_OUTPUT_PATH\r\n    ",
+        "scriptContent": "      cd ~\r\n      # Install dependencies\r\n      curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh\r\n\r\n      # Create a secret scope\r\n      databricks secrets create-scope solution-accelerator-cicd\r\n\r\n      # Add the secret to the scope\r\n      databricks secrets put-secret solution-accelerator-cicd google-api --string-value \"${SECRET}\"\r\n\r\n      # Clone the GitHub repository\r\n      databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub\r\n\r\n      # Export the job template and modify it\r\n      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json\r\n      notebook_path=\"/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME\"\r\n      jq \".tasks[0].notebook_task.notebook_path = \\\"${notebook_path}\\\"\" job-template.json > job.json\r\n\r\n      # Submit the Databricks job\r\n      databricks jobs submit --json @./job.json\r\n      #job_id=$(databricks jobs submit --json @./job.json | jq -r '.job_id')\r\n      #echo \"{\\\"job_id\\\": \\\"$job_id\\\"}\" > $AZ_SCRIPTS_OUTPUT_PATH\r\n    ",
         "environmentVariables": [
           {
             "name": "DATABRICKS_AZURE_RESOURCE_ID",
