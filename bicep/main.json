@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "10847999800479326986"
+      "templateHash": "892105880388376358"
     }
   },
   "parameters": {
@@ -123,7 +123,7 @@
             "secureValue": "[parameters('secret')]"
           }
         ],
-        "timeout": "PT1H",
+        "timeout": "P1D",
         "cleanupPreference": "OnSuccess",
         "retentionInterval": "PT1H"
       },
