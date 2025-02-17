@@ -40,3 +40,42 @@ This notebook automates address validation for AML investigations by matching te
 ### 03 Aml entity resolution
 
 This notebook focuses on entity resolution and data deduplication for AML investigations using the Splink library. It identifies duplicate records by matching entity attributes like organization names, addresses, and transaction amounts, assigning match probabilities to flag potential inconsistencies. The results are stored in Delta Lake, enabling efficient querying and analysis for AML workflows.
+
+### Flow chart diagram
+This flow chart details the execution order when deploying using the "Deploy to azure" button.
+
+```mermaid
+flowchart TD
+    A[Click on Deploy to azure button] --> B[Provision Azure Resources]
+        %% Sub-steps for Provisioning
+        subgraph Provisioning
+        B --> C[Deployment Script Execution]
+        C --> D[Call job-template.json]
+        D --> E[Create Databricks Job & Cluster]
+        E --> F[RUNME.py Execution]
+
+
+        F --> G[Install Utility Packages]
+        I --> J[Databricks Job Execution]
+        J --> K[Execute Notebooks in Order]
+
+        %% Sub-steps for RUNME.py Execution
+        subgraph RUNME.py
+        G --> H[Define Workflow]
+        H --> I[Deploy Compute & Job]
+        end
+
+        K --> K1
+
+        %% Notebook Execution Order
+        subgraph Notebook execution
+        K1[00_aml_context] --> K2[01_aml_network_analysis]
+        K2 --> K3[02_aml_address_verification]
+        K3 --> K4[03_aml_entity_resolution]
+        end
+        end
+
+        %% Change the color of the subgraph
+        style Provisioning fill:#007FFF, stroke:#333, stroke-width:2px
+        style Provisioning run fill:#007FFF, stroke:#333, stroke-width:2px
+```
