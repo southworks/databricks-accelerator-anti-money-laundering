@@ -14,7 +14,7 @@ param sku string = 'premium'
 
 @description('Google street API key to be used in the notebooks.')
 @secure()
-param secret string
+param googleStreetApiKey string
 
 var deploymentId = guid(resourceGroup().id)
 var deploymentIdShort = substring(deploymentId, 0, 8)
@@ -95,9 +95,8 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       jq ".tasks[0].notebook_task.notebook_path = \"${notebook_path}\"" job-template.json > job.json
 
       # Submit the Databricks job
-      databricks jobs submit --json @./job.json
-      #job_id=$(databricks jobs submit --json @./job.json | jq -r '.job_id')
-      #echo "{\"job_id\": \"$job_id\"}" > $AZ_SCRIPTS_OUTPUT_PATH
+      job_page_url=$(databricks jobs submit --json @./job.json | jq -r '.run_page_url')
+      echo "{\"job_page_url\": \"$job_page_url\"}" > $AZ_SCRIPTS_OUTPUT_PATH
     '''
     environmentVariables: [
       {
@@ -122,12 +121,12 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       }
       {
         name: 'SECRET'
-        secureValue: secret
+        secureValue: googleStreetApiKey
       }
     ]
     timeout: 'P1D'
     cleanupPreference: 'OnSuccess'
-    retentionInterval: 'PT1H'
+    retentionInterval: 'P1D'
   }
   identity: {
     type: 'UserAssigned'
@@ -142,4 +141,4 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
 
 // Outputs
 output databricksWorkspaceUrl string = 'https://${(databricks ?? newDatabricks).properties.workspaceUrl}'
-output databricksJobUrl string = 'https://${(databricks ?? newDatabricks).properties.workspaceUrl}/#job/${deploymentScript.properties.outputs.job_id}'
+output databricksJobUrl string = deploymentScript.properties.outputs.job_page_url

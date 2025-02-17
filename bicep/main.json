@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "892105880388376358"
+      "templateHash": "9224275005389733205"
     }
   },
   "parameters": {
@@ -34,7 +34,7 @@
       "type": "string",
       "defaultValue": "premium"
     },
-    "secret": {
+    "googleStreetApiKey": {
       "type": "securestring",
       "metadata": {
         "description": "Google street API key to be used in the notebooks."
@@ -96,7 +96,7 @@
       "kind": "AzureCLI",
       "properties": {
         "azCliVersion": "2.9.1",
-        "scriptContent": "      cd ~\r\n      # Install dependencies\r\n      curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh\r\n\r\n      # Create a secret scope\r\n      databricks secrets create-scope solution-accelerator-cicd\r\n\r\n      # Add the secret to the scope\r\n      databricks secrets put-secret solution-accelerator-cicd google-api --string-value \"${SECRET}\"\r\n\r\n      # Clone the GitHub repository\r\n      repo_info=$(databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub)\r\n      REPO_ID=$(echo \"$repo_info\" | jq -r '.id')\r\n      databricks repos update ${REPO_ID} --branch ${BRANCH_NAME}\r\n\r\n      # Export the job template and modify it\r\n\r\n      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json\r\n      notebook_path=\"/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME\"\r\n      jq \".tasks[0].notebook_task.notebook_path = \\\"${notebook_path}\\\"\" job-template.json > job.json\r\n\r\n      # Submit the Databricks job\r\n      databricks jobs submit --json @./job.json\r\n      #job_id=$(databricks jobs submit --json @./job.json | jq -r '.job_id')\r\n      #echo \"{\\\"job_id\\\": \\\"$job_id\\\"}\" > $AZ_SCRIPTS_OUTPUT_PATH\r\n    ",
+        "scriptContent": "      cd ~\r\n      # Install dependencies\r\n      curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh\r\n\r\n      # Create a secret scope\r\n      databricks secrets create-scope solution-accelerator-cicd\r\n\r\n      # Add the secret to the scope\r\n      databricks secrets put-secret solution-accelerator-cicd google-api --string-value \"${SECRET}\"\r\n\r\n      # Clone the GitHub repository\r\n      repo_info=$(databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub)\r\n      REPO_ID=$(echo \"$repo_info\" | jq -r '.id')\r\n      databricks repos update ${REPO_ID} --branch ${BRANCH_NAME}\r\n\r\n      # Export the job template and modify it\r\n\r\n      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json\r\n      notebook_path=\"/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME\"\r\n      jq \".tasks[0].notebook_task.notebook_path = \\\"${notebook_path}\\\"\" job-template.json > job.json\r\n\r\n      # Submit the Databricks job\r\n      job_page_url=$(databricks jobs submit --json @./job.json | jq -r '.run_page_url')\r\n      echo \"{\\\"job_page_url\\\": \\\"$job_page_url\\\"}\" > $AZ_SCRIPTS_OUTPUT_PATH\r\n    ",
         "environmentVariables": [
           {
             "name": "DATABRICKS_AZURE_RESOURCE_ID",
@@ -120,12 +120,12 @@
           },
           {
             "name": "SECRET",
-            "secureValue": "[parameters('secret')]"
+            "secureValue": "[parameters('googleStreetApiKey')]"
           }
         ],
         "timeout": "P1D",
         "cleanupPreference": "OnSuccess",
-        "retentionInterval": "PT1H"
+        "retentionInterval": "P1D"
       },
       "identity": {
         "type": "UserAssigned",
@@ -147,7 +147,7 @@
     },
     "databricksJobUrl": {
       "type": "string",
-      "value": "[format('https://{0}/#job/{1}', coalesce(reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full'), reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full')).properties.workspaceUrl, reference(resourceId('Microsoft.Resources/deploymentScripts', 'setup-databricks-script'), '2023-08-01').outputs.job_id)]"
+      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', 'setup-databricks-script'), '2023-08-01').outputs.job_page_url]"
     }
   }
 }
