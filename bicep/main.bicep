@@ -11,6 +11,7 @@ param databricksResourceName string
 
 @description('Google street API key to be used in the notebooks.')
 @secure()
+@minLength(15)
 param googleStreetApiKey string
 
 var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'

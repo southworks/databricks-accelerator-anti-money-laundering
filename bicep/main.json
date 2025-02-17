@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "32686758307437442"
+      "templateHash": "11610449554965233362"
     }
   },
   "parameters": {
@@ -25,6 +25,7 @@
     },
     "googleStreetApiKey": {
       "type": "securestring",
+      "minLength": 15,
       "metadata": {
         "description": "Google street API key to be used in the notebooks."
       }
