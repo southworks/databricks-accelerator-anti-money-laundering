@@ -7,21 +7,20 @@ param newOrExistingWorkspace string = 'new'
 @description('The name of the Azure Databricks workspace to create.')
 param databricksResourceName string
 
-@description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param disablePublicIp bool = false
 
-param sku string = 'premium'
 
 @description('Google street API key to be used in the notebooks.')
 @secure()
 param googleStreetApiKey string
 
+var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'
 var deploymentId = guid(resourceGroup().id)
 var deploymentIdShort = substring(deploymentId, 0, 8)
-var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'
-var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${uniqueString(databricksResourceName, resourceGroup().id)}'
-var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var disablePublicIp = false
 var managedResourceGroupId = subscriptionResourceId('Microsoft.Resources/resourceGroups', trimmedMRGName)
+var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${uniqueString(databricksResourceName, resourceGroup().id)}'
+var sku = 'premium'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 
 // Managed Identity
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {

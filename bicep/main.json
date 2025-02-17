@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "9224275005389733205"
+      "templateHash": "32686758307437442"
     }
   },
   "parameters": {
@@ -23,17 +23,6 @@
         "description": "The name of the Azure Databricks workspace to create."
       }
     },
-    "disablePublicIp": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not"
-      }
-    },
-    "sku": {
-      "type": "string",
-      "defaultValue": "premium"
-    },
     "googleStreetApiKey": {
       "type": "securestring",
       "metadata": {
@@ -42,12 +31,14 @@
     }
   },
   "variables": {
+    "acceleratorRepoName": "databricks-accelerator-anti-money-laundering",
     "deploymentId": "[guid(resourceGroup().id)]",
     "deploymentIdShort": "[substring(variables('deploymentId'), 0, 8)]",
-    "acceleratorRepoName": "databricks-accelerator-anti-money-laundering",
+    "disablePublicIp": false,
+    "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('trimmedMRGName'))]",
     "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('databricksResourceName'), uniqueString(parameters('databricksResourceName'), resourceGroup().id))]",
-    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]",
-    "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('trimmedMRGName'))]"
+    "sku": "premium",
+    "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]"
   },
   "resources": [
     {
@@ -63,13 +54,13 @@
       "name": "[parameters('databricksResourceName')]",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "[parameters('sku')]"
+        "name": "[variables('sku')]"
       },
       "properties": {
         "managedResourceGroupId": "[variables('managedResourceGroupId')]",
         "parameters": {
           "enableNoPublicIp": {
-            "value": "[parameters('disablePublicIp')]"
+            "value": "[variables('disablePublicIp')]"
           }
         }
       }
