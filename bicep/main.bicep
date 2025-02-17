@@ -24,7 +24,7 @@ var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedRe
 var managedResourceGroupId = subscriptionResourceId('Microsoft.Resources/resourceGroups', trimmedMRGName)
 
 // Managed Identity
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'dbw-id-${deploymentIdShort}'
   location: resourceGroup().location
 }
@@ -47,7 +47,7 @@ resource newDatabricks 'Microsoft.Databricks/workspaces@2024-05-01' = if (newOrE
 }
 
 // Reference to an existing Databricks workspace if `newOrExistingWorkspace` is 'existing'
-resource databricks 'Microsoft.Databricks/workspaces@2024-09-01-preview' existing = if (newOrExistingWorkspace == 'existing') {
+resource databricks 'Microsoft.Databricks/workspaces@2024-05-01' existing = if (newOrExistingWorkspace == 'existing') {
   name: databricksResourceName
 }
 
@@ -84,9 +84,12 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       databricks secrets put-secret solution-accelerator-cicd google-api --string-value "${SECRET}"
 
       # Clone the GitHub repository
-      databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub
+      repo_info=$(databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub)
+      REPO_ID=$(echo "$repo_info" | jq -r '.id')
+      databricks repos update ${REPO_ID} --branch ${BRANCH_NAME}
 
       # Export the job template and modify it
+
       databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json
       notebook_path="/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME"
       jq ".tasks[0].notebook_task.notebook_path = \"${notebook_path}\"" job-template.json > job.json
@@ -100,6 +103,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       {
         name: 'DATABRICKS_AZURE_RESOURCE_ID'
         value: databricks.id ?? newDatabricks.id
+      }
+      {
+        name: 'BRANCH_NAME'
+        value: '98859-Create-bicep-files-for-Anti-money-laundering'
       }
       {
         name: 'ARM_CLIENT_ID'
