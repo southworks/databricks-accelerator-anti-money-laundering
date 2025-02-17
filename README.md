@@ -18,10 +18,10 @@ The job configuration is written in the RUNME notebook in json format. The cost 
 
 ## How to run locally
 
-1. Install the "[Databricks](https://marketplace.visualstudio.com/items?itemName=databricks.databricks)" extension.
-1. Create in the azure portal an instance of Databricks Service
-1. [Follow these steps](https://docs.databricks.com/en/dev-tools/vscode-ext/configure.html) to configure the extension with the new Databricks Service in azure
-1. Use the "run file as workflow" button to run the notebook you want to test locally
+1. Install the [Databricks](https://marketplace.visualstudio.com/items?itemName=databricks.databricks) extension to VS Code
+1. Create an instance of Databricks Service in the Azure portal
+1. [Follow these steps](https://docs.databricks.com/en/dev-tools/vscode-ext/configure.html) to configure the extension with the new Databricks Service
+1. Use the "Run file as workflow" button to run the notebook you want to test locally
 
 ![Databricks extension run file as workflow button](documents/databricksRunFileAsWorkflow.png)
 
