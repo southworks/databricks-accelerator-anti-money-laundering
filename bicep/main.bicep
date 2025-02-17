@@ -125,7 +125,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
         secureValue: secret
       }
     ]
-    timeout: 'PT20M'
+    timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT1H'
   }

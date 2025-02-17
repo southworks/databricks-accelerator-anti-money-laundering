@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "3034727588789899758"
+      "templateHash": "10847999800479326986"
     }
   },
   "parameters": {
@@ -123,7 +123,7 @@
             "secureValue": "[parameters('secret')]"
           }
         ],
-        "timeout": "PT20M",
+        "timeout": "PT1H",
         "cleanupPreference": "OnSuccess",
         "retentionInterval": "PT1H"
       },
@@ -143,11 +143,11 @@
   "outputs": {
     "databricksWorkspaceUrl": {
       "type": "string",
-      "value": "[format('https://{0}', coalesce(reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-09-01-preview', 'full'), reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full')).properties.workspaceUrl)]"
+      "value": "[format('https://{0}', coalesce(reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full'), reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full')).properties.workspaceUrl)]"
     },
     "databricksJobUrl": {
       "type": "string",
-      "value": "[format('https://{0}/#job/{1}', coalesce(reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-09-01-preview', 'full'), reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full')).properties.workspaceUrl, reference(resourceId('Microsoft.Resources/deploymentScripts', 'setup-databricks-script'), '2023-08-01').outputs.job_id)]"
+      "value": "[format('https://{0}/#job/{1}', coalesce(reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full'), reference(resourceId('Microsoft.Databricks/workspaces', parameters('databricksResourceName')), '2024-05-01', 'full')).properties.workspaceUrl, reference(resourceId('Microsoft.Resources/deploymentScripts', 'setup-databricks-script'), '2023-08-01').outputs.job_id)]"
     }
   }
 }
