@@ -105,7 +105,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       }
       {
         name: 'BRANCH_NAME'
-        value: '98859-Create-bicep-files-for-Anti-money-laundering'
+        value: 'main'
       }
       {
         name: 'ARM_CLIENT_ID'
