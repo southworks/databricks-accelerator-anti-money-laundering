@@ -10,20 +10,20 @@
 
 <img src='https://databricks.com/wp-content/uploads/2021/07/aml-blog-img-1-a.png' width=800>
 
-&copy; 2021 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
-
-| library                                | description             | license    | source                                              |
-|----------------------------------------|-------------------------|------------|-----------------------------------------------------|
-| graphframes:graphframes                | Graph library           | Apache2    | https://github.com/graphframes/graphframes          |
-| torch                                  | Pytorch library         | BSD        | https://pytorch.org/                                |
-| Pillow                                 | Image processing        | HPND       | https://python-pillow.org/                          |
-| Splink                                 | Entity linkage          | MIT        | https://github.com/moj-analytical-services/splink   |
-
 To run this accelerator, clone this repo into a Databricks workspace. Attach the RUNME notebook to any cluster running a DBR 11.0 or later runtime, and execute the notebook via Run-All. A multi-step-job describing the accelerator pipeline will be created, and the link will be provided. Execute the multi-step-job to see how the pipeline runs.
 
 The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2F98859-Create-bicep-files-for-Anti-money-laundering%2Fbicep%2Fmain.json)
+
+## How to run locally
+
+1. Install the "[Databricks](https://marketplace.visualstudio.com/items?itemName=databricks.databricks)" extension.
+1. Create in the azure portal an instance of Databricks Service
+1. [Follow these steps](https://docs.databricks.com/en/dev-tools/vscode-ext/configure.html) to configure the extension with the new Databricks Service in azure
+1. Use the "run file as workflow" button to run the notebook you want to test locally
+
+![Databricks extension run file as workflow button](documents/databricksRunFileAsWorkflow.png)
 
 ## Notebooks summary
 
@@ -41,7 +41,23 @@ This notebook automates address validation for AML investigations by matching te
 
 This notebook focuses on entity resolution and data deduplication for AML investigations using the Splink library. It identifies duplicate records by matching entity attributes like organization names, addresses, and transaction amounts, assigning match probabilities to flag potential inconsistencies. The results are stored in Delta Lake, enabling efficient querying and analysis for AML workflows.
 
-### Flow chart diagram
+## Permissions requirements
+The user need to have the following permissions for the deployment to succeed ([link](https://learn.microsoft.com/en-us/azure/databricks/getting-started/free-trial#permissions)):
+- Azure Contributor or Owner role at the subscription level
+- A custom role definition that has the following list of permissions:
+  - Microsoft.Databricks/workspaces/*
+  - Microsoft.Resources/subscriptions/resourceGroups/read
+  - Microsoft.Resources/subscriptions/resourceGroups/write
+  - Microsoft.Databricks/accessConnectors/*
+  - Microsoft.Compute/register/action
+  - Microsoft.ManagedIdentity/register/action
+  - Microsoft.Storage/register/action
+  - Microsoft.Network/register/action
+  - Microsoft.Resources/deployments/validate/action
+  - Microsoft.Resources/deployments/write
+  - Microsoft.Resources/deployments/read
+
+## Flow chart diagram
 This flow chart details the execution order when deploying using the "Deploy to azure" button.
 
 ```mermaid
@@ -79,3 +95,12 @@ flowchart TD
         style Provisioning fill:#007FFF, stroke:#333, stroke-width:2px
         style Provisioning run fill:#007FFF, stroke:#333, stroke-width:2px
 ```
+
+&copy; 2021 Databricks, Inc. All rights reserved. The source in this notebook is provided subject to the Databricks License [https://databricks.com/db-license-source].  All included or referenced third party libraries are subject to the licenses set forth below.
+
+| library                                | description             | license    | source                                              |
+|----------------------------------------|-------------------------|------------|-----------------------------------------------------|
+| graphframes:graphframes                | Graph library           | Apache2    | https://github.com/graphframes/graphframes          |
+| torch                                  | Pytorch library         | BSD        | https://pytorch.org/                                |
+| Pillow                                 | Image processing        | HPND       | https://python-pillow.org/                          |
+| Splink                                 | Entity linkage          | MIT        | https://github.com/moj-analytical-services/splink   |
