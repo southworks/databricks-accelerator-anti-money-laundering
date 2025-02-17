@@ -10,11 +10,13 @@
 # COMMAND ----------
 
 # MAGIC %pip install graphframes
+
+# COMMAND ----------
+
 from graphframes import GraphFrame
 from graphframes.lib import Pregel
 from pyspark.sql.functions import col, sum, coalesce
 import uuid
-
 
 # COMMAND ----------
 
