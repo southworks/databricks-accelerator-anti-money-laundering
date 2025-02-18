@@ -124,7 +124,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
         secureValue: googleStreetApiKey
       }
     ]
-    timeout: 'P1D'
+    timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }

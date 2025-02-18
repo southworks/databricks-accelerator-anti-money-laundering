@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "6055898521745291863"
+      "templateHash": "3184778763723586974"
     }
   },
   "parameters": {
@@ -115,7 +115,7 @@
             "secureValue": "[parameters('googleStreetApiKey')]"
           }
         ],
-        "timeout": "P1D",
+        "timeout": "PT1H",
         "cleanupPreference": "OnSuccess",
         "retentionInterval": "P1D"
       },
