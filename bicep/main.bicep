@@ -17,10 +17,8 @@ param googleStreetApiKey string
 var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'
 var deploymentId = guid(resourceGroup().id)
 var deploymentIdShort = substring(deploymentId, 0, 8)
-var disablePublicIp = false
 var managedResourceGroupId = subscriptionResourceId('Microsoft.Resources/resourceGroups', trimmedMRGName)
 var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${uniqueString(databricksResourceName, resourceGroup().id)}'
-var sku = 'premium'
 var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 
 // Managed Identity
@@ -34,13 +32,13 @@ resource newDatabricks 'Microsoft.Databricks/workspaces@2024-05-01' = if (newOrE
   name: databricksResourceName
   location: resourceGroup().location
   sku: {
-    name: sku
+    name: 'premium'
   }
   properties: {
     managedResourceGroupId: managedResourceGroupId
     parameters: {
       enableNoPublicIp: {
-        value: disablePublicIp
+        value: false
       }
     }
   }
@@ -126,7 +124,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
     ]
     timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
+    retentionInterval: 'PT1H'
   }
   identity: {
     type: 'UserAssigned'

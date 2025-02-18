@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "3184778763723586974"
+      "templateHash": "10420789205863806624"
     }
   },
   "parameters": {
@@ -35,10 +35,8 @@
     "acceleratorRepoName": "databricks-accelerator-anti-money-laundering",
     "deploymentId": "[guid(resourceGroup().id)]",
     "deploymentIdShort": "[substring(variables('deploymentId'), 0, 8)]",
-    "disablePublicIp": false,
     "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('trimmedMRGName'))]",
     "managedResourceGroupName": "[format('databricks-rg-{0}-{1}', parameters('databricksResourceName'), uniqueString(parameters('databricksResourceName'), resourceGroup().id))]",
-    "sku": "premium",
     "trimmedMRGName": "[substring(variables('managedResourceGroupName'), 0, min(length(variables('managedResourceGroupName')), 90))]"
   },
   "resources": [
@@ -55,13 +53,13 @@
       "name": "[parameters('databricksResourceName')]",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "[variables('sku')]"
+        "name": "premium"
       },
       "properties": {
         "managedResourceGroupId": "[variables('managedResourceGroupId')]",
         "parameters": {
           "enableNoPublicIp": {
-            "value": "[variables('disablePublicIp')]"
+            "value": false
           }
         }
       }
@@ -117,7 +115,7 @@
         ],
         "timeout": "PT1H",
         "cleanupPreference": "OnSuccess",
-        "retentionInterval": "P1D"
+        "retentionInterval": "PT1H"
       },
       "identity": {
         "type": "UserAssigned",
