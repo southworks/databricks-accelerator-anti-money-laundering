@@ -1,60 +1,128 @@
+@allowed([
+  'new'
+  'existing'
+])
+param newOrExistingWorkspace string = 'new'
+
+@description('The name of the Azure Databricks workspace to create.')
 param databricksResourceName string
 
+
+
+@description('Google street API key to be used in the notebooks.')
+@secure()
+@minLength(15)
+param googleStreetApiKey string
+
+var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'
 var deploymentId = guid(resourceGroup().id)
 var deploymentIdShort = substring(deploymentId, 0, 8)
+var managedResourceGroupId = subscriptionResourceId('Microsoft.Resources/resourceGroups', trimmedMRGName)
+var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${uniqueString(databricksResourceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
+// Managed Identity
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'dbw-id-${deploymentIdShort}'
   location: resourceGroup().location
 }
 
-resource databricks 'Microsoft.Databricks/workspaces@2024-09-01-preview' existing = {
+// Create Databricks Workspace if `newOrExistingWorkspace` is 'new'
+resource newDatabricks 'Microsoft.Databricks/workspaces@2024-05-01' = if (newOrExistingWorkspace == 'new') {
   name: databricksResourceName
-}
-
-resource contributorRole 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
-  name: 'Contributor'
-}
-
-resource databricksRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(managedIdentity.id, databricks.id)
+  location: resourceGroup().location
+  sku: {
+    name: 'premium'
+  }
   properties: {
-    principalId: managedIdentity.id
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: contributorRole.id
+    managedResourceGroupId: managedResourceGroupId
+    parameters: {
+      enableNoPublicIp: {
+        value: false
+      }
+    }
   }
 }
 
+// Reference to an existing Databricks workspace if `newOrExistingWorkspace` is 'existing'
+resource databricks 'Microsoft.Databricks/workspaces@2024-05-01' existing = if (newOrExistingWorkspace == 'existing') {
+  name: databricksResourceName
+}
+
+// Role Assignment (Contributor Role)
+resource databricksRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(managedIdentity.id, 'Contributor', databricks.id ?? newDatabricks.id)
+  scope: databricks ?? newDatabricks
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'b24988ac-6180-42a0-ab88-20f7382dd24c' // Contributor role ID
+    )
+    principalId: managedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Deployment Script
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'setup-databricks-script'
   location: resourceGroup().location
   kind: 'AzureCLI'
   properties: {
-    azCliVersion: 'azurelinux3.0'
+    azCliVersion: '2.9.1'
     scriptContent: '''
       cd ~
-      tdnf install -yq unzip
+      # Install dependencies
       curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-      databricks repos create https://github.com/southworks/anti-money-laundering gitHub
-      databricks workspace export /Users/${ARM_CLIENT_ID}/anti-money-laundering/bicep/job-template.json > job-template.json
-      sed "s/<username>/${ARM_CLIENT_ID}/g" job-template.json > job.json
-      databricks jobs submit --json @./job.json
+
+      # Create a secret scope
+      databricks secrets create-scope solution-accelerator-cicd
+
+      # Add the secret to the scope
+      databricks secrets put-secret solution-accelerator-cicd google-api --string-value "${SECRET}"
+
+      # Clone the GitHub repository
+      repo_info=$(databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub)
+      REPO_ID=$(echo "$repo_info" | jq -r '.id')
+      databricks repos update ${REPO_ID} --branch ${BRANCH_NAME}
+
+      # Export the job template and modify it
+
+      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json
+      notebook_path="/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME"
+      jq ".tasks[0].notebook_task.notebook_path = \"${notebook_path}\"" job-template.json > job.json
+
+      # Submit the Databricks job
+      job_page_url=$(databricks jobs submit --json @./job.json | jq -r '.run_page_url')
+      echo "{\"job_page_url\": \"$job_page_url\"}" > $AZ_SCRIPTS_OUTPUT_PATH
     '''
     environmentVariables: [
       {
         name: 'DATABRICKS_AZURE_RESOURCE_ID'
-        value: databricks.id
+        value: databricks.id ?? newDatabricks.id
+      }
+      {
+        name: 'BRANCH_NAME'
+        value: 'main'
       }
       {
         name: 'ARM_CLIENT_ID'
-        secureValue: managedIdentity.properties.clientId
+        value: managedIdentity.properties.clientId
       }
       {
         name: 'ARM_USE_MSI'
         value: 'true'
       }
+      {
+        name: 'ACCELERATOR_REPO_NAME'
+        value: acceleratorRepoName
+      }
+      {
+        name: 'SECRET'
+        secureValue: googleStreetApiKey
+      }
     ]
-    timeout: 'PT20M'
+    timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT1H'
   }
@@ -64,4 +132,11 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       '${managedIdentity.id}': {}
     }
   }
+  dependsOn: [
+    databricksRoleAssignment
+  ]
 }
+
+// Outputs
+output databricksWorkspaceUrl string = 'https://${(databricks ?? newDatabricks).properties.workspaceUrl}'
+output databricksJobUrl string = deploymentScript.properties.outputs.job_page_url
