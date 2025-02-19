@@ -36,7 +36,7 @@ This notebook is responsible for installing the `databricks-notebook-solution-co
 It creates a JSON file that contains the notebooks to execute, the order in which they should be executed, and the cluster where they will be run. If this cluster is not created, the solution companion will use the configuration in this JSON file to create the cluster in the Databricks workspace.
 
 ### Aml config
-This notebooks is called by other notebooks to configure database from where the data is stored.
+This notebook is called by other notebooks to configure database from where the data is stored.
 
 - `SparkSession` of `pyspark.sql` is used to query commands (to query using sql commands)
 - The notebook is in charge of retrieving the data from some public links ("s3://db-gtm-industry-solutions/data/fsi/aml_introduction/txns.parquet", "s3://db-gtm-industry-solutions/data/fsi/aml_introduction/entities.parquet", "s3://db-gtm-industry-solutions/data/fsi/aml_introduction/dedupe.csv") and set a database like in the Databricks file system.
