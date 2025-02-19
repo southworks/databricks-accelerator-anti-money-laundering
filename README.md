@@ -44,7 +44,7 @@ This notebook is called by other notebooks to configure database from where the 
 	- transactions
 	- entities
 	- dedupe
-- Other tables created but not populated are:
+- Other tables created but not populated by this notebook are:
   - synth_scores
 	- structuring
 	- structuring_levels
@@ -60,7 +60,7 @@ This notebook provides an overview of Databricks' AML solution, outlining the us
 This notebook performs network analysis for Anti-Money Laundering (AML) using GraphFrames in Databricks. It builds transaction graphs, detects synthetic identities, identifies suspicious transaction patterns (structuring, round-tripping), and propagates risk scores across the network. Outputs include detected fraud patterns, entity risk scores, and structured datasets for further SQL-based analysis.
 
 - GraphFrames is utilized to perform graph-based analytics, such as detecting connected components, motif finding, and risk score propagation.
-- Key AML Patterns Detected:
+- AML Patterns:
     - **Entity Resolution/Synthetic Identity**:  Identifies synthetic identities by analyzing shared attributes (e.g., email, phone, address) between entities using connected components.
     - **Structuring/Smurfing**:  Detects structuring patterns where multiple entities send smaller payments to avoid detection, using motif finding.
     - **Round-tripping**:  Identifies round-tripping patterns where money flows back to the original source, using motif finding.
