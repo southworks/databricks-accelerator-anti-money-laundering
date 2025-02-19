@@ -76,6 +76,11 @@ This notebook performs network analysis for Anti-Money Laundering (AML) using Gr
 ### 02 Aml Address Validation
 
 This notebook automates address validation for AML investigations by matching textual addresses with street view images using Google Maps API and a pre-trained VGG16 model. It classifies images to verify property legitimacy, storing results in Delta Lake for easy querying and analysis. This approach accelerates manual validation processes, enabling faster and more efficient AML workflows.
+Te results from this notebook are stored on the `street`table on Delta Lake.
+
+- Utilizes the `Google Maps API`  to retrieve property images based on entity addresses.
+- Employs a pre-trained VGG16 model from `PyTorch` to classify images and determine whether a property is legitimate.
+- Stores classification results in `Delta Lake` , enabling analysts to query and analyze validated addresses using SQL
 
 ### 03 Aml entity resolution
 
