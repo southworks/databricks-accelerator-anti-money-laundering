@@ -1,13 +1,5 @@
-@allowed([
-  'new'
-  'existing'
-])
-param newOrExistingWorkspace string = 'new'
-
 @description('The name of the Azure Databricks workspace to create.')
 param databricksResourceName string
-
-
 
 @description('Google street API key to be used in the notebooks.')
 @secure()
@@ -15,44 +7,20 @@ param databricksResourceName string
 param googleStreetApiKey string
 
 var acceleratorRepoName = 'databricks-accelerator-anti-money-laundering'
-var deploymentId = guid(resourceGroup().id)
-var deploymentIdShort = substring(deploymentId, 0, 8)
-var managedResourceGroupId = subscriptionResourceId('Microsoft.Resources/resourceGroups', trimmedMRGName)
-var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${uniqueString(databricksResourceName, resourceGroup().id)}'
-var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var randomString = uniqueString(resourceGroup().id, databricksResourceName, acceleratorRepoName)
+var managedResourceGroupName = 'databricks-rg-${databricksResourceName}-${randomString}'
+var location = resourceGroup().location
 
 // Managed Identity
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'dbw-id-${deploymentIdShort}'
-  location: resourceGroup().location
-}
-
-// Create Databricks Workspace if `newOrExistingWorkspace` is 'new'
-resource newDatabricks 'Microsoft.Databricks/workspaces@2024-05-01' = if (newOrExistingWorkspace == 'new') {
-  name: databricksResourceName
-  location: resourceGroup().location
-  sku: {
-    name: 'premium'
-  }
-  properties: {
-    managedResourceGroupId: managedResourceGroupId
-    parameters: {
-      enableNoPublicIp: {
-        value: false
-      }
-    }
-  }
-}
-
-// Reference to an existing Databricks workspace if `newOrExistingWorkspace` is 'existing'
-resource databricks 'Microsoft.Databricks/workspaces@2024-05-01' existing = if (newOrExistingWorkspace == 'existing') {
-  name: databricksResourceName
+  name: randomString
+  location: location
 }
 
 // Role Assignment (Contributor Role)
-resource databricksRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(managedIdentity.id, 'Contributor', databricks.id ?? newDatabricks.id)
-  scope: databricks ?? newDatabricks
+resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(randomString)
+  scope: resourceGroup()
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -63,80 +31,68 @@ resource databricksRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
   }
 }
 
-// Deployment Script
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  name: 'setup-databricks-script'
-  location: resourceGroup().location
-  kind: 'AzureCLI'
-  properties: {
-    azCliVersion: '2.9.1'
-    scriptContent: '''
-      cd ~
-      # Install dependencies
-      curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-
-      # Create a secret scope
-      databricks secrets create-scope solution-accelerator-cicd
-
-      # Add the secret to the scope
-      databricks secrets put-secret solution-accelerator-cicd google-api --string-value "${SECRET}"
-
-      # Clone the GitHub repository
-      repo_info=$(databricks repos create https://github.com/southworks/${ACCELERATOR_REPO_NAME} gitHub)
-      REPO_ID=$(echo "$repo_info" | jq -r '.id')
-      databricks repos update ${REPO_ID} --branch ${BRANCH_NAME}
-
-      # Export the job template and modify it
-
-      databricks workspace export /Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/bicep/job-template.json > job-template.json
-      notebook_path="/Users/${ARM_CLIENT_ID}/${ACCELERATOR_REPO_NAME}/RUNME"
-      jq ".tasks[0].notebook_task.notebook_path = \"${notebook_path}\"" job-template.json > job.json
-
-      # Submit the Databricks job
-      job_page_url=$(databricks jobs submit --json @./job.json | jq -r '.run_page_url')
-      echo "{\"job_page_url\": \"$job_page_url\"}" > $AZ_SCRIPTS_OUTPUT_PATH
-    '''
-    environmentVariables: [
-      {
-        name: 'DATABRICKS_AZURE_RESOURCE_ID'
-        value: databricks.id ?? newDatabricks.id
-      }
-      {
-        name: 'BRANCH_NAME'
-        value: 'main'
-      }
-      {
-        name: 'ARM_CLIENT_ID'
-        value: managedIdentity.properties.clientId
-      }
-      {
-        name: 'ARM_USE_MSI'
-        value: 'true'
-      }
-      {
-        name: 'ACCELERATOR_REPO_NAME'
-        value: acceleratorRepoName
-      }
-      {
-        name: 'SECRET'
-        secureValue: googleStreetApiKey
-      }
-    ]
-    timeout: 'PT1H'
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'PT1H'
-  }
+resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'create-or-update-databricks-${randomString}'
+  location: location
+  kind: 'AzurePowerShell'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
       '${managedIdentity.id}': {}
     }
   }
+  properties: {
+    azPowerShellVersion: '9.0'
+    arguments: '-resourceName ${databricksResourceName} -resourceGroupName  ${resourceGroup().name} -location ${location} -sku premium -managedResourceGroupName ${managedResourceGroupName}'
+    scriptContent: '''
+      param([string] $resourceName,
+        [string] $resourceGroupName,
+        [string] $location,
+        [string] $sku,
+        [string] $managedResourceGroupName)
+      # Check if workspace exists
+      $resource = Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName | Select-Object -Property ResourceId
+      if (-not $resource) {
+        # Create new workspace
+        Write-Output "Creating new Databricks workspace: $resourceName"
+        New-AzDatabricksWorkspace -Name $resourceName `
+          -ResourceGroupName $resourceGroupName `
+          -Location $location `
+          -ManagedResourceGroupName $managedResourceGroupName `
+          -Sku $sku
+        # Wait for provisioning to complete
+        $retryCount = 0
+        do {
+          Start-Sleep -Seconds 15
+          $provisioningState = (Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName).ProvisioningState
+          Write-Output "Current state: $provisioningState (attempt $retryCount)"
+          $retryCount++
+        } while ($provisioningState -ne 'Succeeded' -and $retryCount -le 40)
+      }
+      # Output the workspace ID to signal completion
+      $workspace = Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName
+      echo "{\"WorkspaceId\": \"$workspace.Id\", \"Exists\": \"True"}" > $AZ_SCRIPTS_OUTPUT_PATH
+    '''
+    timeout: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+    retentionInterval: 'PT2H'
+  }
+}
+
+module databricksModule './databricks.bicep' = {
+  name: 'databricks-module-${randomString}'
+  params: {
+    acceleratorRepoName: acceleratorRepoName
+    databricksResourceName: databricksResourceName
+    googleStreetApiKey: googleStreetApiKey
+    location: location
+    managedIdentityName: randomString
+  }
   dependsOn: [
-    databricksRoleAssignment
+    createDatabricks
   ]
 }
 
 // Outputs
-output databricksWorkspaceUrl string = 'https://${(databricks ?? newDatabricks).properties.workspaceUrl}'
-output databricksJobUrl string = deploymentScript.properties.outputs.job_page_url
+output databricksWorkspaceUrl string = databricksModule.outputs.databricksWorkspaceUrl
+output databricksJobUrl string = databricksModule.outputs.databricksJobUrl

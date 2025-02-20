@@ -14,6 +14,10 @@ To run this accelerator, clone this repo into a Databricks workspace. Attach the
 
 The job configuration is written in the RUNME notebook in json format. The cost associated with running the accelerator is the user's responsibility.
 
+## Deploy to Azure
+
+You can deploy the accelerator to Azure using the button below:
+
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2F98859-Create-bicep-files-for-Anti-money-laundering%2Fbicep%2Fmain.json)
 
 ## How to run locally
@@ -27,15 +31,56 @@ The job configuration is written in the RUNME notebook in json format. The cost 
 
 ## Notebooks summary
 
+### Runme
+This notebook is responsible for installing the `databricks-notebook-solution-companion` and `dbacademy` libraries.
+It creates a JSON file that contains the notebooks to execute, the order in which they should be executed, and the cluster where they will be run. If this cluster is not created, the solution companion will use the configuration in this JSON file to create the cluster in the Databricks workspace.
+
+### Aml config
+This notebook is called by other notebooks to configure database from where the data is stored.
+
+- `SparkSession` of `pyspark.sql` is used to query commands (to query using sql commands)
+- The notebook is in charge of retrieving the data from some public links ("s3://db-gtm-industry-solutions/data/fsi/aml_introduction/txns.parquet", "s3://db-gtm-industry-solutions/data/fsi/aml_introduction/entities.parquet", "s3://db-gtm-industry-solutions/data/fsi/aml_introduction/dedupe.csv") and set a database like in the Databricks file system.
+- The tables created and populated are the following:
+	- transactions
+	- entities
+	- dedupe
+- Other tables created but not populated by this notebook are:
+  - synth_scores
+	- structuring
+	- structuring_levels
+	- roundtrips
+	- risk_propagation
+	- streetview
+	- dedupe_splink
+
 ### 00 Aml context
 This notebook provides an overview of Databricks' AML solution, outlining the use of graph analytics, NLP, and computer vision for fraud detection. It includes references to required libraries, licensing details, and links to the full solution. This serves as a starting point for configuring the AML environment before running analytical workflows.
 
 ### 01 Aml network analysis
 This notebook performs network analysis for Anti-Money Laundering (AML) using GraphFrames in Databricks. It builds transaction graphs, detects synthetic identities, identifies suspicious transaction patterns (structuring, round-tripping), and propagates risk scores across the network. Outputs include detected fraud patterns, entity risk scores, and structured datasets for further SQL-based analysis.
 
+- GraphFrames is utilized to perform graph-based analytics, such as detecting connected components, motif finding, and risk score propagation.
+- AML Patterns:
+    - **Entity Resolution/Synthetic Identity**:  Identifies synthetic identities by analyzing shared attributes (e.g., email, phone, address) between entities using connected components.
+    - **Structuring/Smurfing**:  Detects structuring patterns where multiple entities send smaller payments to avoid detection, using motif finding.
+    - **Round-tripping**:  Identifies round-tripping patterns where money flows back to the original source, using motif finding.
+    - **Risk Score Propagation**:  Propagates risk scores across a network of entities using the Pregel API, adjusting risk scores iteratively based on transaction flows.
+- Graph Algorithms Used:
+    - **Connected Components**:  Identifies groups of connected entities sharing common attributes.
+    - **Motif Finding**:  Detects specific transaction patterns, such as structuring and round-tripping.
+    - **Pregel API**:  Propagates risk scores across a network of entities to adjust risk scores iteratively.
+- Persisted Patterns in Delta Lake:
+    The detected patterns are saved in Delta Lake, allowing for further analysis and integration with Databricks SQL for gold-level aggregated findings.
+
+
 ### 02 Aml Address Validation
 
 This notebook automates address validation for AML investigations by matching textual addresses with street view images using Google Maps API and a pre-trained VGG16 model. It classifies images to verify property legitimacy, storing results in Delta Lake for easy querying and analysis. This approach accelerates manual validation processes, enabling faster and more efficient AML workflows.
+Te results from this notebook are stored on the `street`table on Delta Lake.
+
+- Utilizes the `Google Maps API`  to retrieve property images based on entity addresses.
+- Employs a pre-trained VGG16 model from `PyTorch` to classify images and determine whether a property is legitimate.
+- Stores classification results in `Delta Lake` , enabling analysts to query and analyze validated addresses using SQL
 
 ### 03 Aml entity resolution
 
