@@ -18,7 +18,7 @@ The job configuration is written in the RUNME notebook in json format. The cost 
 
 You can deploy the accelerator to Azure using the button below:
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2F98859-Create-bicep-files-for-Anti-money-laundering%2Fbicep%2Fmain.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsouthworks%2Fdatabricks-accelerator-anti-money-laundering%2Fmain%2Fbicep%2Fmain.json)
 
 ## How to run locally
 
