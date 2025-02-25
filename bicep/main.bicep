@@ -32,7 +32,7 @@ resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@20
 }
 
 resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-  name: 'create-or-update-databricks-${randomString}'
+  name: 'create-databricks-${randomString}'
   location: location
   kind: 'AzurePowerShell'
   identity: {
@@ -52,6 +52,12 @@ resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
         [string] $managedResourceGroupName)
       # Check if workspace exists
       $resource = Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName | Select-Object -Property ResourceId
+      if ($resource) {
+        # Check if the SKU is premium
+        if ($resource.Sku -ne 'premium') {
+          throw "The existing Databricks workspace does not have the required SKU 'premium'."
+        }
+      }
       if (-not $resource) {
         # Create new workspace
         Write-Output "Creating new Databricks workspace: $resourceName"
