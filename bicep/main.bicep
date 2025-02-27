@@ -34,7 +34,7 @@ resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@20
 resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'create-databricks-${randomString}'
   location: location
-  kind: 'AzurePowerShell'
+  kind: 'AzureCLI'
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -42,42 +42,56 @@ resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
     }
   }
   properties: {
-    azPowerShellVersion: '9.0'
-    arguments: '-resourceName ${databricksResourceName} -resourceGroupName  ${resourceGroup().name} -location ${location} -sku premium -managedResourceGroupName ${managedResourceGroupName}'
+    azCliVersion: '2.49.0' // Specify the Azure CLI version
+    arguments: '-resourceName ${databricksResourceName} -resourceGroupName ${resourceGroup().name} -location ${location} -sku premium -managedResourceGroupName ${managedResourceGroupName}'
     scriptContent: '''
-      param([string] $resourceName,
-        [string] $resourceGroupName,
-        [string] $location,
-        [string] $sku,
-        [string] $managedResourceGroupName)
-      # Check if workspace exists
-      $resource = Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName | Select-Object -Property ResourceId
-      if ($resource) {
-        # Check if the SKU is premium
-        if ($resource.Sku -ne 'premium') {
-          throw "The existing Databricks workspace does not have the required SKU 'premium'. Current SKU: $($resource.Sku). Current SKU name: $($resource.Sku.Name)"
-        }
-      }
-      if (-not $resource) {
-        # Create new workspace
-        Write-Output "Creating new Databricks workspace: $resourceName"
-        New-AzDatabricksWorkspace -Name $resourceName `
-          -ResourceGroupName $resourceGroupName `
-          -Location $location `
-          -ManagedResourceGroupName $managedResourceGroupName `
-          -Sku $sku
+      # Define parameters
+      resource_name=$1
+      resource_group_name=$2
+      location=$3
+      sku=$4
+      managed_resource_group_name=$5
+
+      # Check if the workspace exists
+      workspace=$(az databricks workspace show --resource-group "$resource_group_name" --name "$resource_name" --query "id" -o tsv 2>/dev/null)
+      if [ -n "$workspace" ]; then
+        # Retrieve the SKU of the existing workspace
+        current_sku=$(az databricks workspace show --resource-group "$resource_group_name" --name "$resource_name" --query "sku.name" -o tsv)
+
+        # Validate the SKU
+        if [ "$current_sku" != "$sku" ]; then
+          echo "The existing Databricks workspace does not have the required SKU '$sku'. Current SKU: $current_sku"
+          exit 1
+        fi
+      else
+        # Create a new workspace
+        echo "Creating new Databricks workspace: $resource_name"
+        az databricks workspace create \
+          --name "$resource_name" \
+          --resource-group "$resource_group_name" \
+          --location "$location" \
+          --sku "$sku" \
+          --managed-resource-group "$managed_resource_group_name"
+
         # Wait for provisioning to complete
-        $retryCount = 0
-        do {
-          Start-Sleep -Seconds 15
-          $provisioningState = (Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName).ProvisioningState
-          Write-Output "Current state: $provisioningState (attempt $retryCount)"
-          $retryCount++
-        } while ($provisioningState -ne 'Succeeded' -and $retryCount -le 40)
-      }
+        retry_count=0
+        while true; do
+          provisioning_state=$(az databricks workspace show --resource-group "$resource_group_name" --name "$resource_name" --query "provisioningState" -o tsv)
+          echo "Current state: $provisioning_state (attempt $retry_count)"
+          if [ "$provisioning_state" == "Succeeded" ]; then
+            break
+          elif [ $retry_count -ge 40 ]; then
+            echo "Timeout waiting for workspace provisioning."
+            exit 1
+          fi
+          sleep 15
+          retry_count=$((retry_count + 1))
+        done
+      fi
+
       # Output the workspace ID to signal completion
-      $workspace = Get-AzDatabricksWorkspace -Name $resourceName -ResourceGroupName $resourceGroupName
-      echo "{\"WorkspaceId\": \"$workspace.Id\", \"Exists\": \"True"}" > $AZ_SCRIPTS_OUTPUT_PATH
+      workspace_id=$(az databricks workspace show --resource-group "$resource_group_name" --name "$resource_name" --query "id" -o tsv)
+      echo "{\"WorkspaceId\": \"$workspace_id\", \"Exists\": \"True\"}" > $AZ_SCRIPTS_OUTPUT_PATH
     '''
     timeout: 'PT1H'
     cleanupPreference: 'OnSuccess'
