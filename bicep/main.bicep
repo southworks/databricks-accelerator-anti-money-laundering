@@ -55,7 +55,7 @@ resource createDatabricks 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       if ($resource) {
         # Check if the SKU is premium
         if ($resource.Sku -ne 'premium') {
-          throw "The existing Databricks workspace does not have the required SKU 'premium'."
+          throw "The existing Databricks workspace does not have the required SKU 'premium'. Current SKU: $($resource.Sku)"
         }
       }
       if (-not $resource) {
